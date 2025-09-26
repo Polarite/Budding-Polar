@@ -1,0 +1,9 @@
+// Add any additional repositories for your dependencies here.
+
+repositories {
+    // GT New Horizons Maven - for Applied Energistics 2 Unofficial
+    maven {
+        name = "GTNH Maven"
+        url = "https://nexus.gtnewhorizons.com/repository/public/"
+    }
+}
