@@ -155,7 +155,7 @@ public class CommandCertusQuartzDebug extends CommandBase {
     }
 
     @Override
-    public List addTabCompletionOptions(ICommandSender sender, String[] args) {
+    public List<String> addTabCompletionOptions(ICommandSender sender, String[] args) {
         return null; // No tab completion needed for this command
     }
 }

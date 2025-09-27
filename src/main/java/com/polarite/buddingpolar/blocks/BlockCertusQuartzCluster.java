@@ -8,6 +8,7 @@ import java.util.Set;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
@@ -19,6 +20,7 @@ import net.minecraft.world.World;
 import com.polarite.buddingpolar.BuddingPolar;
 import com.polarite.buddingpolar.BuddingPolarItems;
 import com.polarite.buddingpolar.integration.AE2Integration;
+import com.polarite.buddingpolar.sounds.BuddingPolarSounds;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -133,7 +135,7 @@ public class BlockCertusQuartzCluster extends Block {
 
     private int quantityDroppedBase(Random random) {
         switch (type) {
-            case 3: // Full cluster - drops 4 pure certus quartz
+            case 3: // Full cluster - drops 4-7 pure certus quartz
                 return 4 + random.nextInt(3);
             case 2: // Large cluster - drops 2-3 dust
                 return 2 + random.nextInt(2);
@@ -318,29 +320,30 @@ public class BlockCertusQuartzCluster extends Block {
         switch (side % 6) {
             case 0:
                 offsetY = 1;
-                break; // Down -> check up
+                break; // Down
             case 1:
                 offsetY = -1;
-                break; // Up -> check down
+                break; // Up
             case 2:
                 offsetZ = 1;
-                break; // North -> check south
+                break; // North
             case 3:
                 offsetZ = -1;
-                break; // South -> check north
+                break; // South
             case 4:
                 offsetX = 1;
-                break; // West -> check east
+                break; // West
             case 5:
                 offsetX = -1;
-                break; // East -> check west
+                break; // East
         }
         return world.getBlock(x + offsetX, y + offsetY, z + offsetZ)
             .isOpaqueCube();
     }
 
     @SideOnly(Side.CLIENT)
-    public void getSubBlocks(Item item, CreativeTabs tab, List list) {
+    @SuppressWarnings("unchecked")
+    public void getSubBlocks(Item item, CreativeTabs tab, @SuppressWarnings("rawtypes") List list) {
         list.add(new ItemStack(item, 1, 1));
     }
 
@@ -362,5 +365,25 @@ public class BlockCertusQuartzCluster extends Block {
     @Override
     public boolean shouldSideBeRendered(IBlockAccess world, int x, int y, int z, int side) {
         return true;
+    }
+
+    @Override
+    public void onBlockDestroyedByPlayer(World world, int x, int y, int z, int metadata) {
+        super.onBlockDestroyedByPlayer(world, x, y, z, metadata);
+        BuddingPolarSounds
+            .playSound(world, x, y, z, BuddingPolarSounds.CLUSTER_BREAK, 1.0f, 0.8f + world.rand.nextFloat() * 0.4f);
+    }
+
+    @Override
+    public void onBlockAdded(World world, int x, int y, int z) {
+        super.onBlockAdded(world, x, y, z);
+        BuddingPolarSounds
+            .playSound(world, x, y, z, BuddingPolarSounds.CLUSTER_PLACE, 1.0f, 0.8f + world.rand.nextFloat() * 0.4f);
+    }
+
+    @Override
+    public void onEntityWalking(World world, int x, int y, int z, Entity entity) {
+        // Clusters use the default glass step sound for walking
+        world.playSoundEffect(x + 0.5D, y + 0.5D, z + 0.5D, "step.stone", 0.3f, 0.8f + world.rand.nextFloat() * 0.4f);
     }
 }

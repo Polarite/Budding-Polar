@@ -4,12 +4,14 @@ import java.util.Random;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 
 import com.polarite.buddingpolar.BuddingPolarBlocks;
+import com.polarite.buddingpolar.sounds.BuddingPolarSounds;
 
 public class BlockBuddingCertusQuartz extends Block {
 
@@ -50,15 +52,15 @@ public class BlockBuddingCertusQuartz extends Block {
         super.onBlockAdded(world, x, y, z);
         // Start the self-accelerating tick cycle when block is placed
         world.scheduleBlockUpdate(x, y, z, this, 10); // Start ticking every 10 ticks
+        // Play placement sound
+        BuddingPolarSounds
+            .playSound(world, x, y, z, BuddingPolarSounds.BUDDING_PLACE, 1.0f, 0.8f + world.rand.nextFloat() * 0.4f);
     }
 
     @Override
     public void updateTick(World world, int x, int y, int z, Random rand) {
-        // Match AE2 behavior: Growth Accelerators tick every 10 ticks by default
-        // and budding blocks have a 1 in 5 (20%) chance to grow per random tick
-
         // Schedule the next tick to maintain self-accelerating behavior
-        world.scheduleBlockUpdate(x, y, z, this, 10); // Every 10 ticks = 0.5 seconds (matches AE2 default)
+        world.scheduleBlockUpdate(x, y, z, this, 10);
 
         // Check for adjacent Growth Accelerators and calculate additional attempts
         int acceleratorCount = 0;
@@ -75,9 +77,6 @@ public class BlockBuddingCertusQuartz extends Block {
             // AE2 integration not available, use base attempts only
         }
 
-        // AE2 uses GROWTH_CHANCE = 5 (1 in 5 chance per random tick)
-        // With accelerators, each adjacent accelerator provides additional random ticks
-        // WITHOUT accelerators, we reduce the growth chance to 1/5th (1 in 25)
         // So we apply the growth chance check multiple times based on accelerator count
 
         int totalAttempts = 1 + additionalAttempts; // Base 1 + 0-6 additional from accelerators
@@ -100,6 +99,11 @@ public class BlockBuddingCertusQuartz extends Block {
             }
 
             didGrow = attemptGrowth(world, x, y, z, rand);
+        }
+
+        // Play shimmer sound occasionally during random ticks
+        if (rand.nextInt(8) == 0) { // 1 in 8 chance
+            BuddingPolarSounds.playShimmerSound(world, x, y, z);
         }
     }
 
@@ -215,7 +219,7 @@ public class BlockBuddingCertusQuartz extends Block {
 
     @Override
     protected boolean canSilkHarvest() {
-        return true; // Allow silk harvesting, but only if harvested with pickaxe
+        return true;
     }
 
     @Override
@@ -225,5 +229,18 @@ public class BlockBuddingCertusQuartz extends Block {
             return Item.getItemFromBlock(this);
         }
         return null; // No drops without pickaxe
+    }
+
+    @Override
+    public void onBlockDestroyedByPlayer(World world, int x, int y, int z, int metadata) {
+        super.onBlockDestroyedByPlayer(world, x, y, z, metadata);
+        BuddingPolarSounds
+            .playSound(world, x, y, z, BuddingPolarSounds.BUDDING_BREAK, 1.0f, 0.8f + world.rand.nextFloat() * 0.4f);
+    }
+
+    @Override
+    public void onEntityWalking(World world, int x, int y, int z, Entity entity) {
+        BuddingPolarSounds
+            .playSound(world, x, y, z, BuddingPolarSounds.BUDDING_STEP, 0.7f, 0.8f + world.rand.nextFloat() * 0.4f);
     }
 }

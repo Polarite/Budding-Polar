@@ -2,14 +2,14 @@
 	{
 		"modid": "buddingpolar",
 		"name": "Budding Polar",
-		"description": "Adds budding certus quartz growth (AE2-compatible crystal growth system).",
-		"version": "0.1.0",
+		"description": "Backports budding certus quartz clusters and budding systems as an alternative to certus seeds.",
+		"version": "1.0.0",
 		"mcversion": "1.7.10",
 		"url": "",
 		"updateUrl": "",
-		"authorList": ["You"],
-		"credits": "Applied Energistics 2 for original growth mechanics",
-		"logoFile": "",
+		"authorList": ["Polarite"],
+		"credits": "Wojak, Et Futurum, NovaCraft, Applied energistics 2",
+		"logoFile": "logo.png",
 		"screenshots": [],
 		"dependencies": []
 	}

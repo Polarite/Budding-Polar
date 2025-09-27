@@ -13,23 +13,18 @@ public class BuddingPolarItems {
 
     public static void init() {
         // Items will be set later in postInit when AE2Integration is initialized
-        // This ensures AE2 is fully loaded before we try to access its items
     }
 
     /**
      * Called after AE2Integration.init() to set up the AE2 item references
      */
     public static void postInit() {
-        // Both items now reference the same AE2 ItemMultiMaterial base item
-        // The actual item type is determined by metadata when creating ItemStacks
         certus_quartz_crystal = AE2Integration.ae2MultiMaterial;
         certus_quartz_dust = AE2Integration.ae2MultiMaterial;
-
-        // Initialize AE2 item references
         if (AE2Integration.hasAE2Items()) {
-            // AE2 ItemMultiMaterial found
+            // AE2 items successfully found
         } else {
-            // AE2 ItemMultiMaterial not found
+            System.err.println("[Budding Polar] Failed to find AE2! Budding Polar will not function properly.");
         }
     }
 

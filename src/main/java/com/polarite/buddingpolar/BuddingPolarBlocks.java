@@ -16,7 +16,7 @@ public class BuddingPolarBlocks {
     public static Block certus_quartz_cluster;
 
     public static void init() {
-        // Budding certus quartz block (grows crystals)
+        // Budding certus quartz block
         budding_certus_quartz_block = new BlockBuddingCertusQuartz();
         GameRegistry.registerBlock(budding_certus_quartz_block, "budding_certus_quartz_block");
 

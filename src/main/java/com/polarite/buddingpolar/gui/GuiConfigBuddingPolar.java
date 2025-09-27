@@ -23,6 +23,7 @@ public class GuiConfigBuddingPolar extends GuiConfig {
             GuiConfig.getAbridgedConfigPath(BuddingPolar.config.config.toString()));
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private static List<IConfigElement> getConfigElements() {
         List<IConfigElement> list = new ArrayList<IConfigElement>();
 

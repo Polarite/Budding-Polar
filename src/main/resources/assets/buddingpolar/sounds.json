@@ -1,0 +1,67 @@
+{
+  "budding_certus_break": {
+    "category": "block",
+    "sounds": [
+      "buddingpolar:budding/break1",
+      "buddingpolar:budding/break2",
+      "buddingpolar:budding/break3",
+      "buddingpolar:budding/break4"
+    ]
+  },
+  "budding_certus_place": {
+    "category": "block",
+    "sounds": [
+      "buddingpolar:budding/place1",
+      "buddingpolar:budding/place2",
+      "buddingpolar:budding/place3",
+      "buddingpolar:budding/place4"
+    ]
+  },
+  "budding_certus_step": {
+    "category": "block",
+    "sounds": [
+      "buddingpolar:budding/step1",
+      "buddingpolar:budding/step2",
+      "buddingpolar:budding/step3",
+      "buddingpolar:budding/step4",
+      "buddingpolar:budding/step5",
+      "buddingpolar:budding/step6",
+      "buddingpolar:budding/step7",
+      "buddingpolar:budding/step8",
+      "buddingpolar:budding/step9",
+      "buddingpolar:budding/step10",
+      "buddingpolar:budding/step11",
+      "buddingpolar:budding/step12",
+      "buddingpolar:budding/step13",
+      "buddingpolar:budding/step14"
+    ]
+  },
+  "budding_certus_shimmer": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "buddingpolar:budding/shimmer",
+        "volume": 0.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "cluster_certus_break": {
+    "category": "block",
+    "sounds": [
+      "buddingpolar:cluster/break1",
+      "buddingpolar:cluster/break2",
+      "buddingpolar:cluster/break3",
+      "buddingpolar:cluster/break4"
+    ]
+  },
+  "cluster_certus_place": {
+    "category": "block",
+    "sounds": [
+      "buddingpolar:cluster/place1",
+      "buddingpolar:cluster/place2",
+      "buddingpolar:cluster/place3",
+      "buddingpolar:cluster/place4"
+    ]
+  }
+}

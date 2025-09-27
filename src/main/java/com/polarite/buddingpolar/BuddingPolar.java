@@ -51,7 +51,6 @@ public class BuddingPolar {
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
-        // Initialize configuration
         File configFile = new File(event.getModConfigurationDirectory(), "buddingpolar.cfg");
         Configuration configuration = new Configuration(configFile);
         config = new BuddingPolarConfig(configuration);
@@ -85,7 +84,9 @@ public class BuddingPolar {
             // Set up AE2 item references after AE2 integration is initialized
             BuddingPolarItems.postInit();
         } catch (ClassNotFoundException e) {
-            // AE2 not found, skip AE2 integration
+            // AE2 not present, Budding Polar will not function properly
+            System.err
+                .println("[Budding Polar] Applied Energistics 2 not found! Budding Polar will not function properly.");
         }
     }
 
