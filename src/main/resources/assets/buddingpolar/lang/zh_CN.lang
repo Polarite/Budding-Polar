@@ -1,0 +1,9 @@
+# Blocks
+tile.budding_certus_quartz_block.name=赛特斯石英母岩
+tile.small_certus_quartz_bud.name=赛特斯石英嫩芽
+tile.medium_certus_quartz_bud.name=中型赛特斯石英芽
+tile.large_certus_quartz_bud.name=大型赛特斯石英芽
+tile.certus_quartz_cluster.name=赛特斯石英簇
+
+# Creative Tab
+itemGroup.buddingpolar=Budding Polar
