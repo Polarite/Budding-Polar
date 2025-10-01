@@ -22,14 +22,13 @@ public class BlockBuddingCertusQuartz extends Block {
         setStepSound(Block.soundTypeGlass);
         setBlockName("budding_certus_quartz_block");
         setBlockTextureName("buddingpolar:budding_certus_quartz_block");
-        setHarvestLevel("pickaxe", 0); // Requires pickaxe to mine
+        setHarvestLevel("pickaxe", 0);
         setCreativeTab(com.polarite.buddingpolar.BuddingPolar.creativeTabs);
         setTickRandomly(true);
     }
 
     @Override
     public boolean canHarvestBlock(EntityPlayer player, int meta) {
-        // Check if player has valid tool
         if (player == null) return false;
         ItemStack heldItem = player.getCurrentEquippedItem();
         if (heldItem == null) return false;
@@ -38,31 +37,41 @@ public class BlockBuddingCertusQuartz extends Block {
             .getToolClasses(heldItem)
             .contains("pickaxe");
 
-        // If silk touch is required, check for silk touch enchantment
-        if (com.polarite.buddingpolar.config.BuddingPolarConfig.isSilkTouchRequiredForBuddingBlocks()) {
-            return hasPickaxe && net.minecraft.enchantment.EnchantmentHelper.getSilkTouchModifier(player);
+        if (!hasPickaxe) {
+            return false;
         }
 
-        // Otherwise just require pickaxe
-        return hasPickaxe;
+        boolean silkTouchRequired = com.polarite.buddingpolar.config.BuddingPolarConfig
+            .isSilkTouchRequiredForBuddingBlocks();
+
+        if (silkTouchRequired) {
+            boolean hasSilkTouch = net.minecraft.enchantment.EnchantmentHelper.getSilkTouchModifier(player);
+            return hasSilkTouch;
+        }
+        return true;
+    }
+
+    @Override
+    public int getHarvestLevel(int metadata) {
+        return 0;
+    }
+
+    @Override
+    public String getHarvestTool(int metadata) {
+        return "pickaxe";
     }
 
     @Override
     public void onBlockAdded(World world, int x, int y, int z) {
         super.onBlockAdded(world, x, y, z);
-        // Start the self-accelerating tick cycle when block is placed
         world.scheduleBlockUpdate(x, y, z, this, 10); // Start ticking every 10 ticks
-        // Play placement sound
         BuddingPolarSounds
             .playSound(world, x, y, z, BuddingPolarSounds.BUDDING_PLACE, 1.0f, 0.8f + world.rand.nextFloat() * 0.4f);
     }
 
     @Override
     public void updateTick(World world, int x, int y, int z, Random rand) {
-        // Schedule the next tick to maintain self-accelerating behavior
         world.scheduleBlockUpdate(x, y, z, this, 10);
-
-        // Check for adjacent Growth Accelerators and calculate additional attempts
         int acceleratorCount = 0;
         int additionalAttempts = 0;
 
@@ -74,10 +83,8 @@ public class BlockBuddingCertusQuartz extends Block {
             additionalAttempts = com.polarite.buddingpolar.integration.AE2Integration
                 .calculateAdditionalGrowthAttempts(acceleratorCount);
         } catch (ClassNotFoundException e) {
-            // AE2 integration not available, use base attempts only
         }
 
-        // So we apply the growth chance check multiple times based on accelerator count
 
         int totalAttempts = 1 + additionalAttempts; // Base 1 + 0-6 additional from accelerators
 
@@ -93,7 +100,6 @@ public class BlockBuddingCertusQuartz extends Block {
 
         boolean didGrow = false;
         for (int attempt = 0; attempt < totalAttempts && !didGrow; attempt++) {
-            // Growth chance varies based on accelerator presence
             if (rand.nextInt(growthChance) != 0) {
                 continue; // Failed this attempt
             }
@@ -101,17 +107,14 @@ public class BlockBuddingCertusQuartz extends Block {
             didGrow = attemptGrowth(world, x, y, z, rand);
         }
 
-        // Play shimmer sound occasionally during random ticks
         if (rand.nextInt(8) == 0) { // 1 in 8 chance
             BuddingPolarSounds.playShimmerSound(world, x, y, z);
         }
     }
 
     private boolean attemptGrowth(World world, int x, int y, int z, Random rand) {
-        // Get random direction (0-5 for the 6 faces) - similar to AE2's approach
         int facing = rand.nextInt(6);
 
-        // Calculate offset based on facing direction
         int offsetX = 0, offsetY = 0, offsetZ = 0;
         switch (facing) {
             case 0:
@@ -141,10 +144,7 @@ public class BlockBuddingCertusQuartz extends Block {
         Block targetBlock = world.getBlock(targetX, targetY, targetZ);
         int targetMeta = world.getBlockMetadata(targetX, targetY, targetZ);
 
-        // Check if there's already a certus quartz cluster there and upgrade it
-        // Use the same metadata checking logic as NovaCraft (meta should match facing direction)
         if (targetBlock instanceof BlockCertusQuartzCluster && targetMeta % 6 == facing) {
-            // Upgrade through the 4 tiers: small -> medium -> large -> cluster
             if (targetBlock == BuddingPolarBlocks.small_certus_quartz_bud) {
                 world.setBlock(targetX, targetY, targetZ, BuddingPolarBlocks.medium_certus_quartz_bud, facing, 3);
                 return true;
@@ -155,21 +155,18 @@ public class BlockBuddingCertusQuartz extends Block {
                 world.setBlock(targetX, targetY, targetZ, BuddingPolarBlocks.certus_quartz_cluster, facing, 3);
                 return true;
             }
-            // Full clusters don't upgrade further
         } else if (canGrowIn(targetBlock)) {
-            // Place new small bud with proper facing metadata (like NovaCraft)
             world.setBlock(targetX, targetY, targetZ, BuddingPolarBlocks.small_certus_quartz_bud, facing, 3);
             return true;
         }
 
-        return false; // Growth attempt failed
+        return false;
     }
 
     private boolean canGrowIn(Block block) {
         return block.getMaterial() == Material.air || block.getMaterial() == Material.water;
     }
 
-    // ThreadLocal to track who is harvesting this block
     private static final ThreadLocal<EntityPlayer> harvesters = new ThreadLocal<>();
 
     @Override
@@ -179,24 +176,8 @@ public class BlockBuddingCertusQuartz extends Block {
         harvesters.remove();
     }
 
-    private boolean harvestingWithPickaxe() {
-        EntityPlayer harvester = harvesters.get();
-        if (harvester == null) return false;
-        ItemStack heldItem = harvester.getCurrentEquippedItem();
-        if (heldItem == null) return false;
-        return heldItem.getItem()
-            .getToolClasses(heldItem)
-            .contains("pickaxe");
-    }
-
     @Override
     public void dropBlockAsItemWithChance(World world, int x, int y, int z, int metadata, float chance, int fortune) {
-        if (!world.isRemote && !world.restoringBlockSnapshots) {
-            // Only drop if harvested with pickaxe
-            if (!harvestingWithPickaxe()) {
-                return; // No drops without pickaxe
-            }
-        }
         super.dropBlockAsItemWithChance(world, x, y, z, metadata, chance, fortune);
     }
 
@@ -204,11 +185,8 @@ public class BlockBuddingCertusQuartz extends Block {
     public java.util.ArrayList<ItemStack> getDrops(World world, int x, int y, int z, int metadata, int fortune) {
         java.util.ArrayList<ItemStack> drops = new java.util.ArrayList<ItemStack>();
 
-        // getDrops is called by automation tools like ME Annihilation Plane
-        // Always clear the ThreadLocal and allow drops for automation
         harvesters.remove();
 
-        // Create the dropped item (the budding certus quartz block itself)
         ItemStack itemStack = new ItemStack(Item.getItemFromBlock(this), 1, metadata);
         if (itemStack != null) {
             drops.add(itemStack);
@@ -224,11 +202,7 @@ public class BlockBuddingCertusQuartz extends Block {
 
     @Override
     public Item getItemDropped(int metadata, Random random, int fortune) {
-        // Only drop if harvested with pickaxe
-        if (harvestingWithPickaxe()) {
-            return Item.getItemFromBlock(this);
-        }
-        return null; // No drops without pickaxe
+        return Item.getItemFromBlock(this);
     }
 
     @Override

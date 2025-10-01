@@ -19,7 +19,6 @@ import net.minecraft.world.World;
 
 import com.polarite.buddingpolar.BuddingPolar;
 import com.polarite.buddingpolar.BuddingPolarItems;
-import com.polarite.buddingpolar.integration.AE2Integration;
 import com.polarite.buddingpolar.sounds.BuddingPolarSounds;
 
 import cpw.mods.fml.relauncher.Side;
@@ -54,12 +53,6 @@ public class BlockCertusQuartzCluster extends Block {
 
     @Override
     public Item getItemDropped(int metadata, Random random, int fortune) {
-        if (!harvestingWithPickaxe()) {
-            return null;
-        }
-        if (AE2Integration.hasAE2Items()) {
-            return AE2Integration.ae2MultiMaterial;
-        }
         return null;
     }
 
@@ -74,7 +67,11 @@ public class BlockCertusQuartzCluster extends Block {
             EntityPlayer harvester = harvesters.get();
             boolean hasSilkTouch = harvester != null
                 && net.minecraft.enchantment.EnchantmentHelper.getSilkTouchModifier(harvester);
-            if (com.polarite.buddingpolar.config.BuddingPolarConfig.isSilkTouchRequiredForClusters() && hasSilkTouch) {
+
+            boolean shouldDropBlock = com.polarite.buddingpolar.config.BuddingPolarConfig
+                .isSilkTouchRequiredForClusters() && hasSilkTouch;
+
+            if (shouldDropBlock) {
                 ItemStack clusterBlock = new ItemStack(this, 1, metadata);
                 float f = 0.7F;
                 double dx = world.rand.nextFloat() * f + (1.0F - f) * 0.5D;
@@ -162,7 +159,7 @@ public class BlockCertusQuartzCluster extends Block {
 
     @Override
     protected boolean canSilkHarvest() {
-        return true;
+        return false;
     }
 
     public int getDamageValue(World world, int x, int y, int z) {
@@ -383,7 +380,6 @@ public class BlockCertusQuartzCluster extends Block {
 
     @Override
     public void onEntityWalking(World world, int x, int y, int z, Entity entity) {
-        // Clusters use the default glass step sound for walking
         world.playSoundEffect(x + 0.5D, y + 0.5D, z + 0.5D, "step.stone", 0.3f, 0.8f + world.rand.nextFloat() * 0.4f);
     }
 }
