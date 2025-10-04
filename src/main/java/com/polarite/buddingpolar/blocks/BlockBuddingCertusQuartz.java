@@ -82,9 +82,7 @@ public class BlockBuddingCertusQuartz extends Block {
                 .countAdjacentAccelerators(world, x, y, z);
             additionalAttempts = com.polarite.buddingpolar.integration.AE2Integration
                 .calculateAdditionalGrowthAttempts(acceleratorCount);
-        } catch (ClassNotFoundException e) {
-        }
-
+        } catch (ClassNotFoundException e) {}
 
         int totalAttempts = 1 + additionalAttempts; // Base 1 + 0-6 additional from accelerators
 
