@@ -1,0 +1,9 @@
+# Blocks
+tile.budding_certus_quartz_block.name=Keimender Certusquarz
+tile.small_certus_quartz_bud.name=Kleiner Certusquarz Keim
+tile.medium_certus_quartz_bud.name=Mittlerer Certusquarz Keim
+tile.large_certus_quartz_bud.name=Großer Certusquarz Keim
+tile.certus_quartz_cluster.name=Certusquarz-Cluster
+
+# Creative Tab
+itemGroup.buddingpolar=Budding Polar
