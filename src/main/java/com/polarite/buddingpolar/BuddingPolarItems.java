@@ -7,7 +7,7 @@ import com.polarite.buddingpolar.integration.AE2Integration;
 
 public class BuddingPolarItems {
 
-    // These now reference AE2's base ItemMultiMaterial
+    // These now reference AE2 items directly
     public static Item certus_quartz_crystal;
     public static Item certus_quartz_dust;
 
@@ -19,8 +19,8 @@ public class BuddingPolarItems {
      * Called after AE2Integration.init() to set up the AE2 item references
      */
     public static void postInit() {
-        certus_quartz_crystal = AE2Integration.ae2MultiMaterial;
-        certus_quartz_dust = AE2Integration.ae2MultiMaterial;
+        certus_quartz_crystal = AE2Integration.pureCertusQuartzCrystal;
+        certus_quartz_dust = AE2Integration.certusQuartzDust;
         if (AE2Integration.hasAE2Items()) {
             // AE2 items successfully found
         } else {

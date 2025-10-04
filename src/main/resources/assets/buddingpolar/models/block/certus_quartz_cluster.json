@@ -1,0 +1,22 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "cluster": "buddingpolar:blocks/certus_quartz_cluster",
+    "particle": "buddingpolar:blocks/certus_quartz_cluster"
+  },
+  "elements": [
+    {
+      "from": [4, 0, 4],
+      "to": [12, 12, 12],
+      "faces": {
+        "down": {"uv": [0, 0, 16, 16], "texture": "#cluster"},
+        "up": {"uv": [0, 0, 16, 16], "texture": "#cluster"},
+        "north": {"uv": [0, 0, 16, 16], "texture": "#cluster"},
+        "south": {"uv": [0, 0, 16, 16], "texture": "#cluster"},
+        "west": {"uv": [0, 0, 16, 16], "texture": "#cluster"},
+        "east": {"uv": [0, 0, 16, 16], "texture": "#cluster"}
+      }
+    }
+  ]
+}

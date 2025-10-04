@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=down": {
+      "model": "buddingpolar:large_certus_quartz_bud",
+      "x": 180
+    },
+    "facing=up": {
+      "model": "buddingpolar:large_certus_quartz_bud"
+    },
+    "facing=north": {
+      "model": "buddingpolar:large_certus_quartz_bud",
+      "x": 90
+    },
+    "facing=south": {
+      "model": "buddingpolar:large_certus_quartz_bud",
+      "x": 90,
+      "y": 180
+    },
+    "facing=west": {
+      "model": "buddingpolar:large_certus_quartz_bud",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east": {
+      "model": "buddingpolar:large_certus_quartz_bud",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

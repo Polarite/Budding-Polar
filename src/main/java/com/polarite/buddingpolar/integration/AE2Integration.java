@@ -3,9 +3,13 @@ package com.polarite.buddingpolar.integration;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
-import cpw.mods.fml.common.registry.GameRegistry;
+// Optional AE2 API imports are used when AE2 is available at compile/runtime
+// We will also perform registry-based fallbacks if the API isn't present or fails
+// We avoid a hard compile-time dependency on AE2 API methods which may differ in forks.
 
 /**
  * Integration class for Applied Energistics 2 compatibility.
@@ -13,23 +17,79 @@ import cpw.mods.fml.common.registry.GameRegistry;
  */
 public class AE2Integration {
 
-    // AE2 Block references - using strings to avoid direct class dependencies
+    // AE2 Block references
     public static Block growthAccelerator;
 
-    // AE2 ItemMultiMaterial base item - used for both pure certus quartz and dust
-    public static Item ae2MultiMaterial;
-
-    // AE2 ItemMultiMaterial metadata values
-    public static final int PURE_CERTUS_QUARTZ_META = 10; // Pure Certus Quartz Crystal
-    public static final int CERTUS_QUARTZ_DUST_META = 2; // Certus Quartz Dust
+    // AE2 Items
+    public static Item ae2Material; // The base AE2 material item
+    public static Item certusQuartzCrystal;
+    public static Item pureCertusQuartzCrystal;
+    public static Item certusQuartzDust;
 
     public static void init() {
         try {
-            // Try to find AE2 Growth Accelerator block by its registered name
-            growthAccelerator = GameRegistry.findBlock("appliedenergistics2", "tile.BlockQuartzGrowthAccelerator");
+            // Try to find AE2 Growth Accelerator block
+            growthAccelerator = ForgeRegistries.BLOCKS.getValue(
+                new net.minecraft.util.ResourceLocation("appliedenergistics2", "quartz_growth_accelerator"));
 
-            // Find AE2 ItemMultiMaterial - this handles both pure certus quartz and dust
-            ae2MultiMaterial = GameRegistry.findItem("appliedenergistics2", "item.ItemMultiMaterial");
+            // Find the AE2 material item (used with metadata for different materials)
+            ae2Material = ForgeRegistries.ITEMS.getValue(
+                new net.minecraft.util.ResourceLocation("appliedenergistics2", "material"));
+
+            // We'll use registry lookups for AE2 items/blocks. This avoids hard compile-time
+            // dependencies on AE2 API types which may differ in forks.
+
+            // Fallback: attempt to find items/blocks by common resource names used in AE2 forks
+            if (growthAccelerator == null) {
+                String[] accelNames = new String[] {"quartz_growth_accelerator", "growth_accelerator", "growthaccelerator", "accelerator"};
+                for (String name : accelNames) {
+                    Block b = ForgeRegistries.BLOCKS.getValue(new net.minecraft.util.ResourceLocation("appliedenergistics2", name));
+                    if (b != null) {
+                        growthAccelerator = b;
+                        break;
+                    }
+                }
+            }
+
+            // If we have the material item, use it for both dust and pure crystal
+            if (ae2Material != null) {
+                pureCertusQuartzCrystal = ae2Material; // metadata 10
+                certusQuartzDust = ae2Material; // metadata 2
+            } else {
+                // Fallback to trying individual item names if material item not found
+                if (pureCertusQuartzCrystal == null) {
+                    String[] pureNames = new String[] {"pure_certus_quartz_crystal", "certus_quartz_crystal_pure", "pure_certus_crystal", "pure_certus_quartz" , "pure_certus_quartz_crystal"};
+                    for (String name : pureNames) {
+                        Item it = ForgeRegistries.ITEMS.getValue(new net.minecraft.util.ResourceLocation("appliedenergistics2", name));
+                        if (it != null) {
+                            pureCertusQuartzCrystal = it;
+                            break;
+                        }
+                    }
+                }
+
+                if (certusQuartzDust == null) {
+                    String[] dustNames = new String[] {"certus_quartz_dust", "certus_dust", "certusquartzdust"};
+                    for (String name : dustNames) {
+                        Item it = ForgeRegistries.ITEMS.getValue(new net.minecraft.util.ResourceLocation("appliedenergistics2", name));
+                        if (it != null) {
+                            certusQuartzDust = it;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (certusQuartzCrystal == null) {
+                String[] crystalNames = new String[] {"certus_quartz_crystal", "certus_crystal", "certus_quartz"};
+                for (String name : crystalNames) {
+                    Item it = ForgeRegistries.ITEMS.getValue(new net.minecraft.util.ResourceLocation("appliedenergistics2", name));
+                    if (it != null) {
+                        certusQuartzCrystal = it;
+                        break;
+                    }
+                }
+            }
 
             if (growthAccelerator != null) {
                 // Growth accelerator found
@@ -37,44 +97,49 @@ public class AE2Integration {
                 // Growth Accelerator not found
             }
 
-            if (ae2MultiMaterial != null) {
-                // AE2 ItemMultiMaterial found
-            } else {
-                // AE2 ItemMultiMaterial not found
-            }
-
         } catch (Exception e) {
             // Failed to initialize AE2 integration
+            e.printStackTrace();
         }
     }
 
     /**
      * Creates an ItemStack for AE2 Pure Certus Quartz Crystal.
-     * Returns null if AE2 ItemMultiMaterial is not available.
+     * Returns empty ItemStack if AE2 item is not available.
      */
     public static ItemStack createPureCertusQuartzCrystal(int count) {
-        if (ae2MultiMaterial == null) {
-            return null;
+        if (pureCertusQuartzCrystal == null) {
+            return ItemStack.EMPTY;
         }
-        ItemStack result = new ItemStack(ae2MultiMaterial, count, PURE_CERTUS_QUARTZ_META);
-        return result;
+        
+        // If using the new metadata-based system, use metadata 10 for pure crystal
+        if (pureCertusQuartzCrystal == ae2Material && ae2Material != null) {
+            return new ItemStack(ae2Material, count, 10);
+        }
+        
+        return new ItemStack(pureCertusQuartzCrystal, count);
     }
 
     /**
      * Creates an ItemStack for AE2 Certus Quartz Dust.
-     * Returns null if AE2 ItemMultiMaterial is not available.
+     * Returns empty ItemStack if AE2 item is not available.
      */
     public static ItemStack createCertusQuartzDust(int count) {
-        if (ae2MultiMaterial == null) {
-            return null;
+        if (certusQuartzDust == null) {
+            return ItemStack.EMPTY;
         }
-        ItemStack result = new ItemStack(ae2MultiMaterial, count, CERTUS_QUARTZ_DUST_META);
-        return result;
+        
+        // If using the new metadata-based system, use metadata 2 for dust
+        if (certusQuartzDust == ae2Material && ae2Material != null) {
+            return new ItemStack(ae2Material, count, 2);
+        }
+        
+        return new ItemStack(certusQuartzDust, count);
     }
 
     /**
      * Gets the appropriate AE2 ItemStack for cluster drops based on cluster stage.
-     * Returns null if AE2 items aren't available.
+     * Returns empty ItemStack if AE2 items aren't available.
      */
     public static ItemStack getCertusQuartzItemStackForStage(int stage, int count) {
         switch (stage) {
@@ -85,7 +150,7 @@ public class AE2Integration {
             case 2: // Large cluster - drops dust
                 return createCertusQuartzDust(count);
             default:
-                return null;
+                return ItemStack.EMPTY;
         }
     }
 
@@ -93,7 +158,7 @@ public class AE2Integration {
      * Checks if we have access to AE2 items for drops.
      */
     public static boolean hasAE2Items() {
-        return ae2MultiMaterial != null;
+        return certusQuartzDust != null && pureCertusQuartzCrystal != null;
     }
 
     /**
@@ -107,12 +172,10 @@ public class AE2Integration {
      * Counts the number of active (powered) Growth Accelerators adjacent to the given position
      * 
      * @param world The world
-     * @param x     X coordinate
-     * @param y     Y coordinate
-     * @param z     Z coordinate
+     * @param pos   Block position
      * @return Number of adjacent active Growth Accelerators (0-6)
      */
-    public static int countAdjacentAccelerators(World world, int x, int y, int z) {
+    public static int countAdjacentAccelerators(World world, BlockPos pos) {
         if (growthAccelerator == null) {
             return 0;
         }
@@ -120,12 +183,12 @@ public class AE2Integration {
         int count = 0;
 
         // Check all 6 adjacent faces
-        if (isActiveGrowthAccelerator(world, x + 1, y, z)) count++;
-        if (isActiveGrowthAccelerator(world, x - 1, y, z)) count++;
-        if (isActiveGrowthAccelerator(world, x, y + 1, z)) count++;
-        if (isActiveGrowthAccelerator(world, x, y - 1, z)) count++;
-        if (isActiveGrowthAccelerator(world, x, y, z + 1)) count++;
-        if (isActiveGrowthAccelerator(world, x, y, z - 1)) count++;
+        if (isActiveGrowthAccelerator(world, pos.east())) count++;
+        if (isActiveGrowthAccelerator(world, pos.west())) count++;
+        if (isActiveGrowthAccelerator(world, pos.up())) count++;
+        if (isActiveGrowthAccelerator(world, pos.down())) count++;
+        if (isActiveGrowthAccelerator(world, pos.north())) count++;
+        if (isActiveGrowthAccelerator(world, pos.south())) count++;
 
         return count;
     }
@@ -135,20 +198,18 @@ public class AE2Integration {
      * Uses reflection to avoid hard dependencies on AE2 classes
      * 
      * @param world The world
-     * @param x     X coordinate
-     * @param y     Y coordinate
-     * @param z     Z coordinate
+     * @param pos   Block position
      * @return true if it's a powered Growth Accelerator, false otherwise
      */
-    private static boolean isActiveGrowthAccelerator(World world, int x, int y, int z) {
+    private static boolean isActiveGrowthAccelerator(World world, BlockPos pos) {
         // First check if it's a growth accelerator block
-        if (world.getBlock(x, y, z) != growthAccelerator) {
+        if (world.getBlockState(pos).getBlock() != growthAccelerator) {
             return false;
         }
 
         try {
             // Get the tile entity at this position
-            net.minecraft.tileentity.TileEntity tileEntity = world.getTileEntity(x, y, z);
+            net.minecraft.tileentity.TileEntity tileEntity = world.getTileEntity(pos);
             if (tileEntity == null) {
                 return false;
             }

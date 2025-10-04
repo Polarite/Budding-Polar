@@ -1,139 +1,144 @@
 package com.polarite.buddingpolar.blocks;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockContainer;
+import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
+import net.minecraft.block.properties.IProperty;
+import net.minecraft.block.properties.PropertyEnum;
+import net.minecraft.block.state.BlockStateContainer;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.util.EnumBlockRenderType;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.IStringSerializable;
+import net.minecraft.util.NonNullList;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import com.polarite.buddingpolar.BuddingPolar;
 import com.polarite.buddingpolar.BuddingPolarItems;
 import com.polarite.buddingpolar.sounds.BuddingPolarSounds;
+import com.polarite.buddingpolar.tileentity.TileEntityCertusQuartzCluster;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+public class BlockCertusQuartzCluster extends BlockContainer {
 
-public class BlockCertusQuartzCluster extends Block {
+    public static final PropertyEnum<EnumFacing> FACING = PropertyEnum.create("facing", EnumFacing.class);
 
     private final int type;
+    private final String name;
 
     private static final String[] STAGE_NAMES = { "small_certus_quartz_bud", "medium_certus_quartz_bud",
         "large_certus_quartz_bud", "certus_quartz_cluster" };
-    private static final String[] TEXTURE_NAMES = { "small_certus_quartz_bud", "medium_certus_quartz_bud",
-        "large_certus_quartz_bud", "certus_quartz_cluster" };
 
     public BlockCertusQuartzCluster(int type) {
-        super(Material.glass);
+        super(Material.GLASS);
         setHardness(1.5F);
         setResistance(1.5F);
-        setStepSound(Block.soundTypeGlass);
-        setBlockName(STAGE_NAMES[type]);
-        setBlockTextureName("buddingpolar:" + TEXTURE_NAMES[type]);
+        setSoundType(SoundType.GLASS);
+        this.name = STAGE_NAMES[type];
+        setTranslationKey(this.name);
+        setRegistryName(BuddingPolar.MODID, name);
         setHarvestLevel("pickaxe", 0);
-        setLightLevel(0.0625F + (type * 0.125F));
+        setLightLevel(getLightLevelForType(type));
+        // Allow light to pass through transparent parts of the model
         setCreativeTab(BuddingPolar.creativeTabs);
         this.type = type;
+        setDefaultState(this.blockState.getBaseState().withProperty(FACING, EnumFacing.UP));
     }
 
     @Override
-    public int getLightValue(IBlockAccess world, int x, int y, int z) {
-        return 1 + (type * 3);
+    protected BlockStateContainer createBlockState() {
+        return new BlockStateContainer(this, new IProperty[] { FACING });
     }
 
     @Override
-    public Item getItemDropped(int metadata, Random random, int fortune) {
+    public int getMetaFromState(IBlockState state) {
+        return state.getValue(FACING).getIndex();
+    }
+
+    @Override
+    public IBlockState getStateFromMeta(int meta) {
+        return this.getDefaultState().withProperty(FACING, EnumFacing.byIndex(meta));
+    }
+
+    @Override
+    public int getLightValue(IBlockState state, IBlockAccess world, BlockPos pos) {
+        return getLightValueForType(type);
+    }
+
+    private float getLightLevelForType(int type) {
+        switch (type) {
+            case 0: // Small bud
+                return 0.25F; // Light level 4
+            case 1: // Medium bud  
+                return 0.4375F; // Light level 7
+            case 2: // Large bud
+                return 0.625F; // Light level 10
+            case 3: // Full cluster
+                return 0.875F; // Light level 14
+            default:
+                return 0.25F;
+        }
+    }
+
+    private int getLightValueForType(int type) {
+        switch (type) {
+            case 0: // Small bud
+                return 4;
+            case 1: // Medium bud
+                return 7;
+            case 2: // Large bud
+                return 10;
+            case 3: // Full cluster
+                return 14;
+            default:
+                return 4;
+        }
+    }
+
+    @Override
+    public Item getItemDropped(IBlockState state, Random rand, int fortune) {
         return null;
     }
 
     @Override
-    public void dropBlockAsItemWithChance(World world, int x, int y, int z, int metadata, float chance, int fortune) {
-        if (!world.isRemote && !world.restoringBlockSnapshots) {
-            if (!harvestingWithPickaxe()) {
-                harvesters.remove();
-                return;
+    public void getDrops(NonNullList<ItemStack> drops, IBlockAccess world, BlockPos pos, IBlockState state, int fortune) {
+        int quantity = quantityDroppedBase(world instanceof World ? ((World) world).rand : new Random());
+        if (type == 3 && fortune > 0) {
+            Random rand = world instanceof World ? ((World) world).rand : new Random();
+            if (rand.nextInt(2 + fortune) == 0) {
+                quantity += fortune;
             }
-
-            EntityPlayer harvester = harvesters.get();
-            boolean hasSilkTouch = harvester != null
-                && net.minecraft.enchantment.EnchantmentHelper.getSilkTouchModifier(harvester);
-
-            boolean shouldDropBlock = com.polarite.buddingpolar.config.BuddingPolarConfig
-                .isSilkTouchRequiredForClusters() && hasSilkTouch;
-
-            if (shouldDropBlock) {
-                ItemStack clusterBlock = new ItemStack(this, 1, metadata);
-                float f = 0.7F;
-                double dx = world.rand.nextFloat() * f + (1.0F - f) * 0.5D;
-                double dy = world.rand.nextFloat() * f + (1.0F - f) * 0.5D;
-                double dz = world.rand.nextFloat() * f + (1.0F - f) * 0.5D;
-                EntityItem entityItem = new EntityItem(world, x + dx, y + dy, z + dz, clusterBlock);
-                entityItem.delayBeforeCanPickup = 10;
-                world.spawnEntityInWorld(entityItem);
-            } else {
-                int quantity = quantityDropped(metadata, fortune, world.rand);
-                if (quantity > 0) {
-                    ItemStack itemStack = BuddingPolarItems.createItemStackForCluster(type, quantity);
-                    if (itemStack != null) {
-                        float f = 0.7F;
-                        double dx = world.rand.nextFloat() * f + (1.0F - f) * 0.5D;
-                        double dy = world.rand.nextFloat() * f + (1.0F - f) * 0.5D;
-                        double dz = world.rand.nextFloat() * f + (1.0F - f) * 0.5D;
-                        EntityItem entityItem = new EntityItem(world, x + dx, y + dy, z + dz, itemStack);
-                        entityItem.delayBeforeCanPickup = 10;
-                        world.spawnEntityInWorld(entityItem);
-                    }
-                }
-            }
-            harvesters.remove();
         }
-    }
-
-    protected ItemStack createStackedBlock(int metadata) {
-        return new ItemStack(this, 1, metadata);
-    }
-
-    @Override
-    public ArrayList<ItemStack> getDrops(World world, int x, int y, int z, int metadata, int fortune) {
-        ArrayList<ItemStack> drops = new ArrayList<ItemStack>();
-        harvesters.remove();
-        int quantity = quantityDroppedForAutomation(metadata, fortune, world.rand);
+        
         if (quantity > 0) {
             ItemStack itemStack = BuddingPolarItems.createItemStackForCluster(type, quantity);
-            if (itemStack != null) {
+            if (!itemStack.isEmpty()) {
                 drops.add(itemStack);
             }
         }
-        return drops;
-    }
-
-    @Override
-    public void breakBlock(World world, int x, int y, int z, Block block, int metadata) {
-        super.breakBlock(world, x, y, z, block, metadata);
-    }
-
-    private int quantityDroppedForAutomation(int meta, int fortune, Random random) {
-        int drop = quantityDroppedBase(random);
-        if (type == 3 && fortune > 0 && random.nextInt(2 + fortune) == 0) {
-            drop += fortune;
-        }
-        return drop;
     }
 
     private int quantityDroppedBase(Random random) {
         switch (type) {
             case 3: // Full cluster - drops 4-7 pure certus quartz
-                return 4 + random.nextInt(3);
+                return 4 + random.nextInt(4);
             case 2: // Large cluster - drops 2-3 dust
                 return 2 + random.nextInt(2);
             case 1: // Medium cluster - drops 1-2 dust
@@ -146,15 +151,12 @@ public class BlockCertusQuartzCluster extends Block {
     }
 
     @Override
-    public boolean canHarvestBlock(EntityPlayer player, int meta) {
+    public boolean canHarvestBlock(net.minecraft.world.IBlockAccess world, BlockPos pos, EntityPlayer player) {
         if (player == null) return false;
-        ItemStack heldItem = player.getCurrentEquippedItem();
-        if (heldItem == null) return false;
+        ItemStack heldItem = player.getHeldItemMainhand();
+        if (heldItem.isEmpty()) return false;
 
-        boolean hasPickaxe = heldItem.getItem()
-            .getToolClasses(heldItem)
-            .contains("pickaxe");
-        return hasPickaxe;
+        return heldItem.getItem().getToolClasses(heldItem).contains("pickaxe");
     }
 
     @Override
@@ -162,224 +164,105 @@ public class BlockCertusQuartzCluster extends Block {
         return false;
     }
 
-    public int getDamageValue(World world, int x, int y, int z) {
-        return world.getBlockMetadata(x, y, z);
-    }
-
-    public int quantityDropped(int meta, int fortune, Random random) {
-        int drop = quantityDropped(random);
-        if (type == 3 && fortune > 0 && random.nextInt(2 + fortune) == 0) {
-            drop += fortune;
-        }
-        return drop;
-    }
-
-    public int quantityDropped(Random random) {
-        if (!harvestingWithPickaxe()) {
-            return 0;
-        }
-
-        switch (type) {
-            case 3: // Full cluster - drops 4 pure certus quartz
-                return 4 + random.nextInt(3);
-            case 2: // Large cluster - drops 2-3 dust
-                return 2 + random.nextInt(2);
-            case 1: // Medium cluster - drops 1-2 dust
-                return 1 + random.nextInt(2);
-            case 0: // Small cluster - drops 1 dust
-                return 1;
-            default:
-                return 0;
-        }
-    }
-
-    private static final ThreadLocal<EntityPlayer> harvesters = new ThreadLocal<>();
-
     @Override
-    public void onBlockHarvested(World world, int x, int y, int z, int meta, EntityPlayer player) {
-        harvesters.set(player);
-        super.onBlockHarvested(world, x, y, z, meta, player);
-    }
-
-    private boolean harvestingWithPickaxe() {
-        EntityPlayer harvester = harvesters.get();
-        if (harvester == null) {
-            return false;
-        }
-
-        ItemStack heldItem = harvester.getCurrentEquippedItem();
-        if (heldItem == null) {
-            return false;
-        }
-        Set<String> toolClasses = heldItem.getItem()
-            .getToolClasses(heldItem);
-        return toolClasses.contains("pickaxe");
+    public IBlockState getStateForPlacement(World world, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer, EnumHand hand) {
+        return this.getDefaultState().withProperty(FACING, facing);
     }
 
     @Override
-    public int onBlockPlaced(World world, int x, int y, int z, int side, float hitX, float hitY, float hitZ, int meta) {
-        return side;
-    }
-
-    @Override
-    public AxisAlignedBB getCollisionBoundingBoxFromPool(World world, int x, int y, int z) {
-        int meta = world.getBlockMetadata(x, y, z);
+    public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos) {
+        EnumFacing facing = state.getValue(FACING);
         float height = 0.1875F + (type * 0.125F);
         float xzOffset = 0.375F - (type * 0.0625F);
 
-        switch (meta % 6) {
-            case 0: // Down
-                return AxisAlignedBB.getBoundingBox(
-                    x + xzOffset,
-                    y + 1 - height,
-                    z + xzOffset,
-                    x + 1 - xzOffset,
-                    y + 1.0F,
-                    z + 1 - xzOffset);
-            case 1: // Up
-                return AxisAlignedBB
-                    .getBoundingBox(x + xzOffset, y, z + xzOffset, x + 1 - xzOffset, y + height, z + 1 - xzOffset);
-            case 2: // North
-                return AxisAlignedBB.getBoundingBox(
-                    x + xzOffset,
-                    y + xzOffset,
-                    z + 1 - height,
-                    x + 1 - xzOffset,
-                    y + 1 - xzOffset,
-                    z + 1.0F);
-            case 3: // South
-                return AxisAlignedBB
-                    .getBoundingBox(x + xzOffset, y + xzOffset, z, x + 1 - xzOffset, y + 1 - xzOffset, z + height);
-            case 4: // West
-                return AxisAlignedBB.getBoundingBox(
-                    x + 1 - height,
-                    y + xzOffset,
-                    z + xzOffset,
-                    x + 1.0F,
-                    y + 1 - xzOffset,
-                    z + 1 - xzOffset);
-            case 5: // East
-                return AxisAlignedBB
-                    .getBoundingBox(x, y + xzOffset, z + xzOffset, x + height, y + 1 - xzOffset, z + 1 - xzOffset);
+        switch (facing) {
+            case DOWN:
+                return new AxisAlignedBB(xzOffset, 1 - height, xzOffset, 1 - xzOffset, 1.0F, 1 - xzOffset);
+            case UP:
+                return new AxisAlignedBB(xzOffset, 0.0F, xzOffset, 1 - xzOffset, height, 1 - xzOffset);
+            case NORTH:
+                return new AxisAlignedBB(xzOffset, xzOffset, 1 - height, 1 - xzOffset, 1 - xzOffset, 1.0F);
+            case SOUTH:
+                return new AxisAlignedBB(xzOffset, xzOffset, 0.0F, 1 - xzOffset, 1 - xzOffset, height);
+            case WEST:
+                return new AxisAlignedBB(1 - height, xzOffset, xzOffset, 1.0F, 1 - xzOffset, 1 - xzOffset);
+            case EAST:
+                return new AxisAlignedBB(0.0F, xzOffset, xzOffset, height, 1 - xzOffset, 1 - xzOffset);
         }
-        return null;
+        return FULL_BLOCK_AABB;
     }
 
     @Override
-    public void setBlockBoundsBasedOnState(IBlockAccess access, int x, int y, int z) {
-        int meta = access.getBlockMetadata(x, y, z);
-        float height = 0.1875F + (type * 0.125F);
-        float xzOffset = 0.375F - (type * 0.0625F);
-
-        switch (meta % 6) {
-            case 0: // Down
-                this.setBlockBounds(xzOffset, 1 - height, xzOffset, 1 - xzOffset, 1.0F, 1 - xzOffset);
-                break;
-            case 1: // Up
-                this.setBlockBounds(xzOffset, 0.0F, xzOffset, 1 - xzOffset, height, 1 - xzOffset);
-                break;
-            case 2: // North
-                this.setBlockBounds(xzOffset, xzOffset, 1 - height, 1 - xzOffset, 1 - xzOffset, 1.0F);
-                break;
-            case 3: // South
-                this.setBlockBounds(xzOffset, xzOffset, 0.0F, 1 - xzOffset, 1 - xzOffset, height);
-                break;
-            case 4: // West
-                this.setBlockBounds(1 - height, xzOffset, xzOffset, 1.0F, 1 - xzOffset, 1 - xzOffset);
-                break;
-            case 5: // East
-                this.setBlockBounds(0.0F, xzOffset, xzOffset, height, 1 - xzOffset, 1 - xzOffset);
-                break;
+    public void neighborChanged(IBlockState state, World world, BlockPos pos, Block blockIn, BlockPos fromPos) {
+        if (!this.canBlockStay(world, pos, state)) {
+            world.destroyBlock(pos, true);
         }
     }
 
-    protected void checkAndDropBlock(World world, int x, int y, int z) {
-        if (!this.canBlockStay(world, x, y, z)) {
-            this.dropBlockAsItem(world, x, y, z, world.getBlockMetadata(x, y, z), 0);
-            world.setBlockToAir(x, y, z);
-        }
+    public boolean canBlockStay(World world, BlockPos pos, IBlockState state) {
+        EnumFacing facing = state.getValue(FACING);
+        BlockPos supportPos = pos.offset(facing.getOpposite());
+        IBlockState supportState = world.getBlockState(supportPos);
+        return supportState.isSideSolid(world, supportPos, facing);
     }
 
     @Override
-    public void onNeighborBlockChange(World world, int x, int y, int z, Block neighborBlock) {
-        super.onNeighborBlockChange(world, x, y, z, neighborBlock);
-        this.checkAndDropBlock(world, x, y, z);
-    }
-
-    @Override
-    public boolean canBlockStay(World world, int x, int y, int z) {
-        return this.canPlaceBlockOnSide(world, x, y, z, world.getBlockMetadata(x, y, z));
-    }
-
-    @Override
-    public boolean canPlaceBlockOnSide(World world, int x, int y, int z, int side) {
-        int offsetX = 0, offsetY = 0, offsetZ = 0;
-        switch (side % 6) {
-            case 0:
-                offsetY = 1;
-                break; // Down
-            case 1:
-                offsetY = -1;
-                break; // Up
-            case 2:
-                offsetZ = 1;
-                break; // North
-            case 3:
-                offsetZ = -1;
-                break; // South
-            case 4:
-                offsetX = 1;
-                break; // West
-            case 5:
-                offsetX = -1;
-                break; // East
-        }
-        return world.getBlock(x + offsetX, y + offsetY, z + offsetZ)
-            .isOpaqueCube();
+    public boolean canPlaceBlockOnSide(World world, BlockPos pos, EnumFacing side) {
+        BlockPos supportPos = pos.offset(side.getOpposite());
+        IBlockState supportState = world.getBlockState(supportPos);
+        return supportState.isSideSolid(world, supportPos, side);
     }
 
     @SideOnly(Side.CLIENT)
-    @SuppressWarnings("unchecked")
-    public void getSubBlocks(Item item, CreativeTabs tab, @SuppressWarnings("rawtypes") List list) {
-        list.add(new ItemStack(item, 1, 1));
+    public void getSubBlocks(CreativeTabs tab, NonNullList<ItemStack> items) {
+        items.add(new ItemStack(this));
     }
 
-    @Override
-    public boolean renderAsNormalBlock() {
+    public boolean isNormalCube(IBlockState state) {
+        return false;
+    }
+    public boolean isOpaqueCube(IBlockState state) {
+        return false;
+    }
+    public boolean isFullCube(IBlockState state) {
         return false;
     }
 
-    @Override
-    public boolean isOpaqueCube() {
-        return false;
+    @SideOnly(Side.CLIENT)
+    public BlockRenderLayer getBlockLayer() {
+        // Use CUTOUT so fully-transparent pixels are discarded and won't render as black.
+        // CUTOUT is appropriate for textures that are either fully opaque or fully transparent.
+        return BlockRenderLayer.CUTOUT;
     }
 
     @Override
-    public int getRenderType() {
-        return com.polarite.buddingpolar.renderer.RenderIDs.CERTUS_QUARTZ_CLUSTER;
+    public void breakBlock(World world, BlockPos pos, IBlockState state) {
+        super.breakBlock(world, pos, state);
+        BuddingPolarSounds.playSound(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
+            BuddingPolarSounds.CLUSTER_BREAK, 1.0f, 0.8f + world.rand.nextFloat() * 0.4f);
     }
 
     @Override
-    public boolean shouldSideBeRendered(IBlockAccess world, int x, int y, int z, int side) {
-        return true;
+    public void onBlockAdded(World world, BlockPos pos, IBlockState state) {
+        super.onBlockAdded(world, pos, state);
+        BuddingPolarSounds.playSound(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
+            BuddingPolarSounds.CLUSTER_PLACE, 1.0f, 0.8f + world.rand.nextFloat() * 0.4f);
     }
 
     @Override
-    public void onBlockDestroyedByPlayer(World world, int x, int y, int z, int metadata) {
-        super.onBlockDestroyedByPlayer(world, x, y, z, metadata);
-        BuddingPolarSounds
-            .playSound(world, x, y, z, BuddingPolarSounds.CLUSTER_BREAK, 1.0f, 0.8f + world.rand.nextFloat() * 0.4f);
+    public TileEntity createNewTileEntity(World worldIn, int meta) {
+        return new TileEntityCertusQuartzCluster();
     }
 
     @Override
-    public void onBlockAdded(World world, int x, int y, int z) {
-        super.onBlockAdded(world, x, y, z);
-        BuddingPolarSounds
-            .playSound(world, x, y, z, BuddingPolarSounds.CLUSTER_PLACE, 1.0f, 0.8f + world.rand.nextFloat() * 0.4f);
+    public EnumBlockRenderType getRenderType(IBlockState state) {
+        return EnumBlockRenderType.ENTITYBLOCK_ANIMATED;
     }
 
     @Override
-    public void onEntityWalking(World world, int x, int y, int z, Entity entity) {
-        world.playSoundEffect(x + 0.5D, y + 0.5D, z + 0.5D, "step.stone", 0.3f, 0.8f + world.rand.nextFloat() * 0.4f);
+    public void onEntityWalk(World world, BlockPos pos, Entity entity) {
+        world.playSound(null, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 
+            net.minecraft.init.SoundEvents.BLOCK_STONE_STEP, net.minecraft.util.SoundCategory.BLOCKS, 
+            0.3f, 0.8f + world.rand.nextFloat() * 0.4f);
     }
 }
