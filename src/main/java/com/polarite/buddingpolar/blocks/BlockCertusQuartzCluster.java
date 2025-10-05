@@ -1,10 +1,8 @@
 package com.polarite.buddingpolar.blocks;
 
-import java.util.List;
 import java.util.Random;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockContainer;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
@@ -17,12 +15,9 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
-import net.minecraft.util.IStringSerializable;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -34,14 +29,15 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import com.polarite.buddingpolar.BuddingPolar;
 import com.polarite.buddingpolar.BuddingPolarItems;
 import com.polarite.buddingpolar.sounds.BuddingPolarSounds;
-import com.polarite.buddingpolar.tileentity.TileEntityCertusQuartzCluster;
 
-public class BlockCertusQuartzCluster extends BlockContainer {
+public class BlockCertusQuartzCluster extends Block {
 
     public static final PropertyEnum<EnumFacing> FACING = PropertyEnum.create("facing", EnumFacing.class);
 
     private final int type;
     private final String name;
+    
+    private static final ThreadLocal<EntityPlayer> harvestingPlayer = new ThreadLocal<>();
 
     private static final String[] STAGE_NAMES = { "small_certus_quartz_bud", "medium_certus_quartz_bud",
         "large_certus_quartz_bud", "certus_quartz_cluster" };
@@ -56,7 +52,7 @@ public class BlockCertusQuartzCluster extends BlockContainer {
         setRegistryName(BuddingPolar.MODID, name);
         setHarvestLevel("pickaxe", 0);
         setLightLevel(getLightLevelForType(type));
-        // Allow light to pass through transparent parts of the model
+        setLightOpacity(0); // Allow light to pass through transparent pixels
         setCreativeTab(BuddingPolar.creativeTabs);
         this.type = type;
         setDefaultState(this.blockState.getBaseState().withProperty(FACING, EnumFacing.UP));
@@ -119,6 +115,24 @@ public class BlockCertusQuartzCluster extends BlockContainer {
 
     @Override
     public void getDrops(NonNullList<ItemStack> drops, IBlockAccess world, BlockPos pos, IBlockState state, int fortune) {
+        // Check if silk touch config is enabled and if we have silk touch
+        if (com.polarite.buddingpolar.config.BuddingPolarConfig.isSilkTouchRequiredForClusters()) {
+            EntityPlayer player = harvestingPlayer.get();
+            if (player != null) {
+                ItemStack heldItem = player.getHeldItemMainhand();
+                if (!heldItem.isEmpty()) {
+                    int silkTouchLevel = net.minecraft.enchantment.EnchantmentHelper.getEnchantmentLevel(
+                        net.minecraft.init.Enchantments.SILK_TOUCH, heldItem);
+                    if (silkTouchLevel > 0) {
+                        // Drop the block itself
+                        drops.add(new ItemStack(this, 1, this.getMetaFromState(state)));
+                        return;
+                    }
+                }
+            }
+        }
+        
+        // Normal drops (crystals/dust)
         int quantity = quantityDroppedBase(world instanceof World ? ((World) world).rand : new Random());
         if (type == 3 && fortune > 0) {
             Random rand = world instanceof World ? ((World) world).rand : new Random();
@@ -160,8 +174,20 @@ public class BlockCertusQuartzCluster extends BlockContainer {
     }
 
     @Override
+    public void onBlockHarvested(World worldIn, BlockPos pos, IBlockState state, EntityPlayer player) {
+        harvestingPlayer.set(player);
+        super.onBlockHarvested(worldIn, pos, state, player);
+    }
+
+    @Override
+    public void harvestBlock(World worldIn, EntityPlayer player, BlockPos pos, IBlockState state, net.minecraft.tileentity.TileEntity te, ItemStack stack) {
+        super.harvestBlock(worldIn, player, pos, state, te, stack);
+        harvestingPlayer.remove();
+    }
+
+    @Override
     protected boolean canSilkHarvest() {
-        return false;
+        return com.polarite.buddingpolar.config.BuddingPolarConfig.isSilkTouchRequiredForClusters();
     }
 
     @Override
@@ -218,21 +244,31 @@ public class BlockCertusQuartzCluster extends BlockContainer {
         items.add(new ItemStack(this));
     }
 
+    @Override
     public boolean isNormalCube(IBlockState state) {
         return false;
     }
+
+    @Override
     public boolean isOpaqueCube(IBlockState state) {
         return false;
     }
+
+    @Override
     public boolean isFullCube(IBlockState state) {
         return false;
     }
 
+    @Override
     @SideOnly(Side.CLIENT)
-    public BlockRenderLayer getBlockLayer() {
-        // Use CUTOUT so fully-transparent pixels are discarded and won't render as black.
-        // CUTOUT is appropriate for textures that are either fully opaque or fully transparent.
+    public BlockRenderLayer getRenderLayer() {
         return BlockRenderLayer.CUTOUT;
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public boolean shouldSideBeRendered(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side) {
+        return true;
     }
 
     @Override
@@ -247,16 +283,6 @@ public class BlockCertusQuartzCluster extends BlockContainer {
         super.onBlockAdded(world, pos, state);
         BuddingPolarSounds.playSound(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
             BuddingPolarSounds.CLUSTER_PLACE, 1.0f, 0.8f + world.rand.nextFloat() * 0.4f);
-    }
-
-    @Override
-    public TileEntity createNewTileEntity(World worldIn, int meta) {
-        return new TileEntityCertusQuartzCluster();
-    }
-
-    @Override
-    public EnumBlockRenderType getRenderType(IBlockState state) {
-        return EnumBlockRenderType.ENTITYBLOCK_ANIMATED;
     }
 
     @Override

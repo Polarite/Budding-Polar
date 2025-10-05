@@ -1,22 +1,6 @@
 {
-  "parent": "minecraft:block/block",
-  "render_type": "minecraft:cutout",
+  "parent": "minecraft:block/cross",
   "textures": {
-    "bud": "buddingpolar:blocks/small_certus_quartz_bud",
-    "particle": "buddingpolar:blocks/small_certus_quartz_bud"
-  },
-  "elements": [
-    {
-      "from": [6, 0, 6],
-      "to": [10, 6, 10],
-      "faces": {
-        "down": {"uv": [0, 0, 8, 8], "texture": "#bud"},
-        "up": {"uv": [0, 0, 8, 8], "texture": "#bud"},
-        "north": {"uv": [0, 0, 8, 10], "texture": "#bud"},
-        "south": {"uv": [0, 0, 8, 10], "texture": "#bud"},
-        "west": {"uv": [0, 0, 8, 10], "texture": "#bud"},
-        "east": {"uv": [0, 0, 8, 10], "texture": "#bud"}
-      }
-    }
-  ]
+    "cross": "buddingpolar:blocks/small_certus_quartz_bud"
+  }
 }

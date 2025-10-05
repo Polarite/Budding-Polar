@@ -4,11 +4,9 @@ import java.io.File;
 
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.init.Items;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
@@ -16,18 +14,17 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
-import net.minecraftforge.fml.common.registry.GameRegistry;
 
 import com.polarite.buddingpolar.config.BuddingPolarConfig;
 import com.polarite.buddingpolar.sounds.BuddingPolarSounds;
 import com.polarite.buddingpolar.worldgen.MeteoriteWorldHandler;
-import com.polarite.buddingpolar.tileentity.TileEntityCertusQuartzCluster;
 
 @Mod(
     modid = BuddingPolar.MODID,
     version = BuddingPolar.VERSION,
     name = BuddingPolar.NAME,
-    dependencies = "required-after:appliedenergistics2")
+    dependencies = "required-after:appliedenergistics2",
+    guiFactory = "com.polarite.buddingpolar.gui.GuiFactoryBuddingPolar")
 public class BuddingPolar {
 
     public static final String MODID = "buddingpolar";
@@ -65,10 +62,6 @@ public class BuddingPolar {
 
         BuddingPolarBlocks.init();
         BuddingPolarItems.init();
-        
-        // Register tile entities
-        GameRegistry.registerTileEntity(TileEntityCertusQuartzCluster.class, 
-            new net.minecraft.util.ResourceLocation(MODID, "certus_quartz_cluster"));
         
         proxy.preInit(event);
     }
