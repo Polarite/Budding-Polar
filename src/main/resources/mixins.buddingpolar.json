@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.polarite.buddingpolar.mixin.buddingpolar",
+  "refmap": "mixins.buddingpolar.refmap.json",
+  "target": "@env(DEFAULT)",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "MixinMeteoritePlacer"
+  ]
+}

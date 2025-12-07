@@ -5,13 +5,10 @@ import java.io.File;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Configuration;
 
 import com.polarite.buddingpolar.config.BuddingPolarConfig;
-import com.polarite.buddingpolar.worldgen.MeteoriteWorldHandler;
 
-import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.SidedProxy;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
@@ -64,12 +61,6 @@ public class BuddingPolar {
     public void init(FMLInitializationEvent event) {
         proxy.init(event);
         proxy.registerRenderers();
-
-        // Register meteorite world handler for placing budding certus quartz blocks
-        MinecraftForge.EVENT_BUS.register(new MeteoriteWorldHandler());
-        FMLCommonHandler.instance()
-            .bus()
-            .register(new MeteoriteWorldHandler());
     }
 
     @Mod.EventHandler
