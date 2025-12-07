@@ -17,7 +17,6 @@ import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 
 import com.polarite.buddingpolar.config.BuddingPolarConfig;
 import com.polarite.buddingpolar.sounds.BuddingPolarSounds;
-import com.polarite.buddingpolar.worldgen.MeteoriteWorldHandler;
 
 @Mod(
     modid = BuddingPolar.MODID,
@@ -28,7 +27,7 @@ import com.polarite.buddingpolar.worldgen.MeteoriteWorldHandler;
 public class BuddingPolar {
 
     public static final String MODID = "buddingpolar";
-    public static final String VERSION = "1.0.0";
+    public static final String VERSION = "1.0.5";
     public static final String NAME = "Budding Polar";
 
     @SidedProxy(
@@ -70,9 +69,6 @@ public class BuddingPolar {
     public void init(FMLInitializationEvent event) {
         proxy.init(event);
         proxy.registerRenderers();
-
-        // Register meteorite world handler for placing budding certus quartz blocks
-        MinecraftForge.EVENT_BUS.register(new MeteoriteWorldHandler());
     }
 
     @Mod.EventHandler
