@@ -3,7 +3,7 @@
 		"modid": "buddingpolar",
 		"name": "Budding Polar",
 		"description": "Backports budding certus quartz clusters and budding systems as an alternative to certus seeds.",
-		"version": "1.0.5",
+		"version": "1.0.6",
 		"mcversion": "1.7.10",
 		"url": "",
 		"updateUrl": "",

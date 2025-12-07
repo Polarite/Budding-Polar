@@ -43,13 +43,6 @@ public abstract class MixinMeteoritePlacer {
     private void onSpawnMeteoriteCenterReturn(CallbackInfoReturnable<Boolean> cir) {
         // Only modify if the meteorite actually spawned (returns true)
         if (cir.getReturnValue()) {
-            System.out.println("[Budding Polar] MixinMeteoritePlacer: Meteorite spawned at " + x + ", " + y + ", " + z);
-            System.out.println(
-                "[Budding Polar] MixinMeteoritePlacer: Placing budding certus quartz under sky chest at " + x
-                    + ", "
-                    + (y - 1)
-                    + ", "
-                    + z);
             // Replace the block under the sky chest with budding certus quartz
             world.setBlock(x, y - 1, z, BuddingPolarBlocks.budding_certus_quartz_block);
         }
