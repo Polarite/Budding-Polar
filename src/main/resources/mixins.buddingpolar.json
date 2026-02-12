@@ -4,8 +4,5 @@
   "package": "com.polarite.buddingpolar.mixin.buddingpolar",
   "refmap": "mixins.buddingpolar.refmap.json",
   "target": "@env(DEFAULT)",
-  "compatibilityLevel": "JAVA_8",
-  "mixins": [
-    "MixinMeteoritePlacer"
-  ]
+  "compatibilityLevel": "JAVA_8",  "plugin": "com.polarite.buddingpolar.mixin.BuddingPolarMixinPlugin",  "mixins": []
 }

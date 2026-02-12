@@ -1,4 +1,4 @@
-package com.polarite.buddingpolar;
+package com.polarite.buddingpolar.mixin;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -6,29 +6,47 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
+import org.spongepowered.asm.lib.ClassReader;
+import org.spongepowered.asm.lib.ClassVisitor;
+import org.spongepowered.asm.lib.MethodVisitor;
+import org.spongepowered.asm.lib.Opcodes;
+import org.spongepowered.asm.lib.tree.ClassNode;
+import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
+import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
-import com.gtnewhorizon.gtnhmixins.ILateMixinLoader;
-import com.gtnewhorizon.gtnhmixins.LateMixin;
+/**
+ * Mixin config plugin that dynamically selects which meteorite mixin to load
+ * based on which AE2 fork is installed (standard AE2 vs GTMEGA fork).
+ */
+public class BuddingPolarMixinPlugin implements IMixinConfigPlugin {
 
-@LateMixin
-public class BuddingPolarLateMixins implements ILateMixinLoader {
+    private boolean isGTMEGA = false;
 
     @Override
-    public String getMixinConfig() {
-        return "mixins.buddingpolar.json";
+    public void onLoad(String mixinPackage) {
+        // Detect which AE2 fork is installed
+        this.isGTMEGA = detectGTMEGAAE2();
     }
 
     @Override
-    public List<String> getMixins(Set<String> loadedMods) {
-        List<String> mixins = new ArrayList<>();
+    public String getRefMapperConfig() {
+        return null;
+    }
 
-        // Detect which AE2 fork is installed by inspecting the bytecode without loading the class
-        // Standard AE2 has spawnMeteoriteCenter(), GTMEGA fork uses placeMeteorite() directly
-        boolean isGTMEGA = isGTMEGAAE2();
+    @Override
+    public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+        // Allow all mixins by default, we control which ones are added in getMixins()
+        return true;
+    }
+
+    @Override
+    public void acceptTargets(Set<String> myTargets, Set<String> otherTargets) {
+        // No-op
+    }
+
+    @Override
+    public List<String> getMixins() {
+        List<String> mixins = new ArrayList<>();
 
         if (isGTMEGA) {
             mixins.add("MixinMeteoritePlacerGTMEGA");
@@ -39,16 +57,26 @@ public class BuddingPolarLateMixins implements ILateMixinLoader {
         return mixins;
     }
 
+    public void preApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
+        // No-op
+    }
+
+    public void postApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
+        // No-op
+    }
+
     /**
      * Detects if the GTMEGA Applied Energistics 2 Unofficial fork is installed.
      * The GTMEGA fork has a different MeteoritePlacer implementation that doesn't have
-     * the spawnMeteoriteCenter() method - instead, it places the sky chest directly in placeMeteorite().
+     * the spawnMeteoriteCenter() method - instead, it places the sky chest directly in
+     * placeMeteorite().
      *
-     * Uses ASM bytecode inspection to avoid loading the class, which would prevent mixin transformation.
+     * Uses ASM bytecode inspection to avoid loading the class, which would prevent mixin
+     * transformation.
      *
      * @return true if GTMEGA AE2 fork is detected, false for standard AE2
      */
-    private boolean isGTMEGAAE2() {
+    private boolean detectGTMEGAAE2() {
         try {
             // Use ASM to inspect the bytecode without loading the class
             String classPath = "appeng/worldgen/MeteoritePlacer.class";
